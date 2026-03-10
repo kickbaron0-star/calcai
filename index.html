@@ -641,6 +641,101 @@
       transform: translateY(0);
     }
 
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px; height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 64px; left: 0; right: 0;
+      background: rgba(8,8,8,0.98);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 20px;
+      z-index: 99;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s;
+    }
+    .mobile-menu a:last-child { border-bottom: none; color: var(--orange); }
+    .mobile-menu a:hover { color: var(--orange); }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .cursor, .cursor-ring { display: none; }
+      body { cursor: auto; }
+      .btn-primary, .btn-ghost { cursor: pointer; }
+
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+
+      .hero { padding: 100px 20px 60px; min-height: auto; }
+      .hero-h1 { font-size: clamp(48px, 13vw, 80px); letter-spacing: -1px; }
+      .hero-sub { font-size: 16px; }
+      .hero-cta { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .hero-number, .hero-line, .hero-line2 { display: none; }
+
+      .stats-bar { flex-direction: column; padding: 0; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); padding: 24px 20px; max-width: 100%; }
+      .stat:last-child { border-bottom: none; }
+      .stat-num { font-size: 44px; }
+
+      section { padding: 60px 20px; }
+
+      .problem-grid { grid-template-columns: 1fr; gap: 40px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step-card { padding: 28px 24px; }
+      .features-grid { grid-template-columns: 1fr; gap: 16px; }
+      .feature-card { padding: 24px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .price-card { padding: 32px 24px; }
+      .price-card.featured { border-left: none; border-right: none; border-top: 2px solid var(--orange); border-bottom: 2px solid var(--orange); }
+      .price-amount { font-size: 48px; }
+
+      .waitlist-form { flex-direction: column; }
+      .waitlist-inner { text-align: left; }
+      .section-label { justify-content: flex-start !important; }
+
+      footer { flex-direction: column; align-items: flex-start; gap: 16px; padding: 32px 20px; }
+      .footer-links { flex-wrap: wrap; gap: 16px; }
+      .section-h2 { font-size: clamp(36px, 10vw, 56px); }
+    }
+
+    @media (max-width: 480px) {
+      .hero-h1 { font-size: clamp(40px, 15vw, 60px); }
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -679,7 +774,15 @@
       <li><a href="#prijzen">Prijzen</a></li>
       <li><a href="#waitlist" class="btn-primary" style="padding: 8px 18px; font-size: 14px;">Early access →</a></li>
     </ul>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
   </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#hoe-het-werkt" onclick="toggleMenu()">Hoe het werkt</a>
+    <a href="#features" onclick="toggleMenu()">Features</a>
+    <a href="#prijzen" onclick="toggleMenu()">Prijzen</a>
+    <a href="#waitlist" onclick="toggleMenu()">Early access →</a>
+  </div>
 
   <!-- HERO -->
   <section class="hero">
@@ -982,6 +1085,14 @@
     }, { threshold: 0.5 });
     const statsBar = document.querySelector('.stats-bar');
     if (statsBar) statsObserver.observe(statsBar);
+
+    // Mobile menu
+    function toggleMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('hamburger');
+      menu.classList.toggle('open');
+      btn.classList.toggle('open');
+    }
 
     // Waitlist
     function handleWaitlist() {
