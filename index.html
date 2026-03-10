@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CalcAI — AI-calculaties voor bouw & installatie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #f97316;
+      --orange-dark: #c2410c;
+      --bg: #080808;
+      --surface: #101010;
+      --surface2: #161616;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
+      --text: #ede9e0;
+      --muted: #666;
+      --muted2: #444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--orange);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid rgba(249,115,22,0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: all 0.18s ease;
+    }
+
+    /* Blueprint grid background */
+    .blueprint-bg {
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(249,115,22,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249,115,22,0.04) 1px, transparent 1px),
+        linear-gradient(rgba(249,115,22,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249,115,22,0.015) 1px, transparent 1px);
+      background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+    .logo span { color: var(--orange); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .btn-primary {
+      background: var(--orange);
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary:hover {
+      background: #ea580c;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(249,115,22,0.35);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-ghost:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 48px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.25);
+      border-radius: 2px;
+      padding: 6px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--orange);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s forwards;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--orange);
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .hero-h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(72px, 10vw, 140px);
+      line-height: 0.9;
+      letter-spacing: -2px;
+      color: var(--text);
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.2s forwards;
+    }
+    .hero-h1 .accent { color: var(--orange); }
+    .hero-h1 .outline {
+      -webkit-text-stroke: 2px rgba(249,115,22,0.4);
+      color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 520px;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.35s forwards;
+      font-weight: 400;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.5s forwards;
+    }
+
+    .hero-note {
+      font-size: 12px;
+      color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Diagonal accent line */
+    .hero-line {
+      position: absolute;
+      right: -100px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-15deg);
+      width: 600px;
+      height: 600px;
+      border: 1px solid rgba(249,115,22,0.06);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-line2 {
+      position: absolute;
+      right: -50px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-15deg);
+      width: 400px;
+      height: 400px;
+      border: 1px solid rgba(249,115,22,0.1);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Big orange number decoration */
+    .hero-number {
+      position: absolute;
+      right: 48px;
+      bottom: 80px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 280px;
+      color: rgba(249,115,22,0.04);
+      line-height: 1;
+      pointer-events: none;
+      letter-spacing: -10px;
+      user-select: none;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+    }
+    .stat {
+      flex: 1;
+      max-width: 280px;
+      text-align: center;
+      padding: 0 40px;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 52px;
+      color: var(--orange);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    /* SECTION styles */
+    section { padding: 100px 48px; }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::before {
+      content: '';
+      width: 32px;
+      height: 1px;
+      background: var(--orange);
+      display: block;
+    }
+
+    .section-h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(44px, 6vw, 80px);
+      line-height: 0.95;
+      letter-spacing: -1px;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+
+    /* PROBLEM */
+    .problem-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .problem-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .problem-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .problem-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+    .problem-item:hover { border-color: rgba(249,115,22,0.3); }
+    .problem-icon {
+      font-size: 22px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .problem-text strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .problem-text span {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* HOW IT WORKS */
+    .steps-section { max-width: 1100px; margin: 0 auto; }
+    .steps-header { margin-bottom: 64px; }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .step-card {
+      background: var(--surface);
+      padding: 40px 36px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .step-card:hover { background: var(--surface2); }
+    .step-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 80px;
+      color: rgba(249,115,22,0.08);
+      line-height: 1;
+      position: absolute;
+      top: 20px; right: 24px;
+      letter-spacing: -2px;
+    }
+    .step-icon-wrap {
+      width: 48px; height: 48px;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .step-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* FEATURES */
+    .features-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .features-inner { max-width: 1100px; margin: 0 auto; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 64px;
+    }
+    .feature-card {
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card:hover { border-color: rgba(249,115,22,0.2); transform: translateY(-3px); }
+    .feature-icon { font-size: 28px; margin-bottom: 16px; }
+    .feature-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    /* PRICING */
+    .pricing-inner { max-width: 1100px; margin: 0 auto; }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 64px;
+    }
+    .price-card {
+      background: var(--surface);
+      padding: 40px 36px;
+      position: relative;
+    }
+    .price-card.featured {
+      background: linear-gradient(160deg, #141414, #111);
+      border-left: 1px solid rgba(249,115,22,0.3);
+      border-right: 1px solid rgba(249,115,22,0.3);
+    }
+    .price-tag {
+      display: inline-block;
+      background: var(--orange);
+      color: white;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+    .price-plan {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .price-amount {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 56px;
+      color: var(--orange);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .price-period { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+    .price-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .price-features li {
+      font-size: 14px;
+      color: var(--muted);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      line-height: 1.5;
+    }
+    .price-features li::before {
+      content: '→';
+      color: var(--orange);
+      flex-shrink: 0;
+      font-size: 12px;
+      margin-top: 1px;
+    }
+
+    /* WAITLIST */
+    .waitlist-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+    .waitlist-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .waitlist-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 40px;
+    }
+    .waitlist-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 14px 18px;
+      border-radius: 4px;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: none;
+    }
+    .waitlist-input:focus { border-color: var(--orange); }
+    .waitlist-input::placeholder { color: var(--muted2); }
+    .waitlist-note {
+      font-size: 12px;
+      color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace;
+      margin-top: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 2px;
+    }
+    .footer-logo span { color: var(--orange); }
+    .footer-copy {
+      font-size: 12px;
+      color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    /* REVEAL animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+    /* Success state */
+    .success-msg {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.3);
+      border-radius: 4px;
+      color: var(--orange);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body class="blueprint-bg">
+
+  <!-- Custom cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">CALC<span>AI</span></div>
+    <ul class="nav-links">
+      <li><a href="#hoe-het-werkt">Hoe het werkt</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#prijzen">Prijzen</a></li>
+      <li><a href="#waitlist" class="btn-primary" style="padding: 8px 18px; font-size: 14px;">Early access →</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-line"></div>
+    <div class="hero-line2"></div>
+    <div class="hero-number">AI</div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Nu in early access
+      </div>
+
+      <h1 class="hero-h1">
+        IN 60 SEC<br>
+        EEN <span class="accent">SCHERPE</span><br>
+        <span class="outline">OFFERTE</span>
+      </h1>
+
+      <p class="hero-sub">
+        CalcAI genereert binnen 60 seconden een professionele calculatie voor bouw, elektra, HVAC en installatie. Geen spreadsheets. Geen tijdverspilling.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#waitlist" class="btn-primary">Gratis proberen →</a>
+        <a href="#hoe-het-werkt" class="btn-ghost">Bekijk demo</a>
+        <span class="hero-note">↗ Geen creditcard vereist</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-num" data-target="60">0</div>
+      <div class="stat-label">seconden per offerte</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="8">0</div>
+      <div class="stat-label">sectoren ondersteund</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-prefix="€" data-target="2400">0</div>
+      <div class="stat-label">gemiddelde tijdsbesparing per jaar</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-suffix="%" data-target="94">0</div>
+      <div class="stat-label">klantacceptatiegraad</div>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="problem-section">
+    <div class="problem-grid">
+      <div>
+        <div class="section-label reveal">Het probleem</div>
+        <h2 class="section-h2 reveal">Offertes maken<br>kost <span style="color:var(--orange)">uren.</span><br>Die heb je niet.</h2>
+        <p style="color:var(--muted); font-size:15px; line-height:1.8; margin-top:20px;" class="reveal">
+          Vakmannen zijn goed in hun werk — niet in Excel. Handmatige calculaties kosten tijd, leiden tot fouten en zorgen voor gemiste opdrachten. CalcAI doet het rekenwerk, zodat jij je kunt focussen op uitvoering.
+        </p>
+      </div>
+      <ul class="problem-list">
+        <li class="problem-item reveal">
+          <span class="problem-icon">⏰</span>
+          <div class="problem-text">
+            <strong>Uren per offerte</strong>
+            <span>Een gemiddelde calculatie kost 2–4 uur. Vermenigvuldig dat met 20 offertes per maand.</span>
+          </div>
+        </li>
+        <li class="problem-item reveal">
+          <span class="problem-icon">❌</span>
+          <div class="problem-text">
+            <strong>Rekenfouts kosten geld</strong>
+            <span>Eén gemiste post in een spreadsheet en je werkt tegen verlies. Het gebeurt vaker dan je denkt.</span>
+          </div>
+        </li>
+        <li class="problem-item reveal">
+          <span class="problem-icon">📉</span>
+          <div class="problem-text">
+            <strong>Te traag = opdracht kwijt</strong>
+            <span>Klanten kiezen de partij die het eerst en scherpst reageert. Niet de beste vakman.</span>
+          </div>
+        </li>
+        <li class="problem-item reveal">
+          <span class="problem-icon">📄</span>
+          <div class="problem-text">
+            <strong>Onprofessionele presentatie</strong>
+            <span>Een Word-doc of handgeschreven lijst verliest het altijd van een strakke offerte met BTW-splitsing.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="hoe-het-werkt">
+    <div class="steps-section">
+      <div class="steps-header reveal">
+        <div class="section-label">Hoe het werkt</div>
+        <h2 class="section-h2">Drie stappen.<br><span style="color:var(--orange)">Één minuut.</span></h2>
+      </div>
+      <div class="steps-grid reveal">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon-wrap">🏗️</div>
+          <div class="step-title">Kies het projecttype</div>
+          <p class="step-desc">Selecteer het type werk: elektra, bouw, HVAC, loodgieterswerk, schilderwerk of een van de andere sectoren.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon-wrap">✍️</div>
+          <div class="step-title">Beschrijf het project</div>
+          <p class="step-desc">Omschrijf het werk in gewone taal. Geen sjablonen of vaste velden — gewoon zeggen wat er gedaan moet worden.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon-wrap">⚡</div>
+          <div class="step-title">Offerte klaar</div>
+          <p class="step-desc">AI genereert een volledige offerte met arbeidskosten, materialen, BTW-splitsing en betalingsvoorwaarden. Direct te downloaden of versturen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="features-section">
+    <div class="features-inner">
+      <div class="section-label reveal">Features</div>
+      <h2 class="section-h2 reveal">Alles wat je nodig hebt.<br><span style="color:var(--orange)">Niets wat je niet nodig hebt.</span></h2>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">🤖</div>
+          <div class="feature-title">AI-calculatie</div>
+          <p class="feature-desc">Realistische Nederlandse marktprijzen voor arbeidskosten en materialen, gegenereerd door geavanceerde AI.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📄</div>
+          <div class="feature-title">PDF-export</div>
+          <p class="feature-desc">Download je offerte direct als professionele PDF — inclusief jouw logo, btw-nummer en betalingsvoorwaarden.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📧</div>
+          <div class="feature-title">Directe e-mail</div>
+          <p class="feature-desc">Verstuur de offerte vanuit het platform direct naar de klant. Met een klik, zonder extra software.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📋</div>
+          <div class="feature-title">Klantportaal</div>
+          <p class="feature-desc">Alle offertes op één plek. Volg de status: verzonden, bekeken, geaccepteerd of afgewezen.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">⚙️</div>
+          <div class="feature-title">Eigen tarieven</div>
+          <p class="feature-desc">Pas de uurtarieven en materiaalmarges aan op jouw bedrijf. CalcAI rekent automatisch met jouw getallen.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Statistieken</div>
+          <p class="feature-desc">Hoeveel offertes verstuurd, wat is je conversieratio, en wat is je gemiddelde projectwaarde? Alles inzichtelijk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="prijzen">
+    <div class="pricing-inner">
+      <div class="section-label reveal">Prijzen</div>
+      <h2 class="section-h2 reveal">Transparant.<br><span style="color:var(--orange)">Geen verrassingen.</span></h2>
+      <div class="pricing-grid reveal">
+        <div class="price-card">
+          <div class="price-plan">Starter</div>
+          <div class="price-amount">€0</div>
+          <div class="price-period">Altijd gratis</div>
+          <ul class="price-features">
+            <li>5 offertes per maand</li>
+            <li>AI-calculatie voor alle sectoren</li>
+            <li>PDF-download</li>
+            <li>CalcAI-branding op offerte</li>
+          </ul>
+          <a href="#waitlist" class="btn-ghost" style="width:100%; text-align:center;">Aan de slag</a>
+        </div>
+        <div class="price-card featured">
+          <div class="price-tag">Populairst</div>
+          <div class="price-plan">Pro</div>
+          <div class="price-amount">€49</div>
+          <div class="price-period">per maand, excl. btw</div>
+          <ul class="price-features">
+            <li>Onbeperkt offertes</li>
+            <li>Eigen logo & huisstijl</li>
+            <li>E-mail versturen vanuit platform</li>
+            <li>Eigen uurtarieven instellen</li>
+            <li>Klantportaal & statusopvolging</li>
+            <li>Statistieken dashboard</li>
+          </ul>
+          <a href="#waitlist" class="btn-primary" style="width:100%; text-align:center;">Start gratis proefperiode</a>
+        </div>
+        <div class="price-card">
+          <div class="price-plan">Business</div>
+          <div class="price-amount">€149</div>
+          <div class="price-period">per maand, excl. btw</div>
+          <ul class="price-features">
+            <li>Alles van Pro</li>
+            <li>Tot 5 gebruikers</li>
+            <li>API-toegang</li>
+            <li>Koppeling met boekhoudpakket</li>
+            <li>Prioriteit support</li>
+            <li>Maatwerk integraties</li>
+          </ul>
+          <a href="#waitlist" class="btn-ghost" style="width:100%; text-align:center;">Contact opnemen</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section id="waitlist" class="waitlist-section">
+    <div class="waitlist-inner">
+      <div class="section-label reveal" style="justify-content:center;">Early Access</div>
+      <h2 class="section-h2 reveal" style="font-size: clamp(40px,6vw,72px);">
+        Wees er als<br>
+        <span style="color:var(--orange)">eerste bij.</span>
+      </h2>
+      <p style="color:var(--muted); font-size:16px; line-height:1.8; margin-top:16px;" class="reveal">
+        CalcAI lanceert binnenkort. Meld je aan voor early access en ontvang 3 maanden Pro gratis.
+      </p>
+
+      <div class="waitlist-form reveal" id="waitlist-form">
+        <input type="email" class="waitlist-input" id="email-input" placeholder="jouw@emailadres.nl" />
+        <button class="btn-primary" onclick="handleWaitlist()">Aanmelden →</button>
+      </div>
+      <div class="success-msg" id="success-msg">
+        ✓ &nbsp;Je staat op de lijst! We nemen snel contact op.
+      </div>
+      <p class="waitlist-note reveal">Geen spam. Alleen de lancering en jouw gratis Pro-periode.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">CALC<span>AI</span></div>
+    <div class="footer-copy">© 2025 CalcAI — calcai.nl</div>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Voorwaarden</a>
+      <a href="#">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animCursor() {
+      cursor.style.left = mx + 'px';
+      cursor.style.top = my + 'px';
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top = ry + 'px';
+      requestAnimationFrame(animCursor);
+    }
+    animCursor();
+
+    document.querySelectorAll('a, button, input').forEach(el => {
+      el.addEventListener('mouseenter', () => { ring.style.transform = 'translate(-50%,-50%) scale(1.8)'; ring.style.borderColor = 'rgba(249,115,22,0.7)'; });
+      el.addEventListener('mouseleave', () => { ring.style.transform = 'translate(-50%,-50%) scale(1)'; ring.style.borderColor = 'rgba(249,115,22,0.4)'; });
+    });
+
+    // Reveal on scroll
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.12 });
+    reveals.forEach(r => observer.observe(r));
+
+    // Counter animation
+    function animateCounter(el) {
+      const target = parseInt(el.dataset.target);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      let current = 0;
+      const duration = 1800;
+      const step = target / (duration / 16);
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = prefix + Math.floor(current).toLocaleString('nl-NL') + suffix;
+        if (current >= target) clearInterval(timer);
+      }, 16);
+    }
+    const statsObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          document.querySelectorAll('[data-target]').forEach(animateCounter);
+          statsObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.5 });
+    const statsBar = document.querySelector('.stats-bar');
+    if (statsBar) statsObserver.observe(statsBar);
+
+    // Waitlist
+    function handleWaitlist() {
+      const email = document.getElementById('email-input').value;
+      if (!email || !email.includes('@')) {
+        document.getElementById('email-input').style.borderColor = '#ef4444';
+        return;
+      }
+      document.getElementById('waitlist-form').style.display = 'none';
+      const msg = document.getElementById('success-msg');
+      msg.style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
