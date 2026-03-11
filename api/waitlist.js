@@ -11,8 +11,77 @@ export default async function handler(req, res) {
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
+  const confirmationHtml = `<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalcAI — Je staat op de lijst</title>
+</head>
+<body style="margin:0;padding:0;background:#080808;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#080808;padding:48px 20px;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
+        <tr><td style="padding:0 0 16px;">
+          <p style="margin:0;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#444;font-family:'Courier New',monospace;">CALCAI / EARLY ACCESS / ${email}</p>
+        </td></tr>
+        <tr><td style="background:#0d0d0d;border:1px solid #1a1a1a;border-bottom:none;padding:36px 40px 28px;">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td><table cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#f97316;width:8px;height:32px;border-radius:2px;"></td>
+              <td style="padding-left:12px;"><span style="font-size:24px;font-weight:900;letter-spacing:3px;color:#f0ece4;font-family:Arial,sans-serif;">CALC<span style="color:#f97316;">AI</span></span></td>
+            </tr></table></td>
+            <td align="right"><span style="font-size:10px;letter-spacing:2px;color:#333;font-family:'Courier New',monospace;">calcai.nl</span></td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="background:linear-gradient(90deg,#f97316 0%,#ea580c 60%,#1a1a1a 100%);height:2px;"></td></tr>
+        <tr><td style="background:#0d0d0d;border:1px solid #1a1a1a;border-top:none;border-bottom:none;padding:40px 40px 32px;">
+          <p style="margin:0 0 8px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#f97316;font-family:'Courier New',monospace;">// BEVESTIGING_001</p>
+          <h1 style="margin:0 0 24px;font-size:42px;font-weight:900;line-height:1.05;color:#f0ece4;font-family:Arial,sans-serif;letter-spacing:-1px;">Je staat<br>op de lijst.<br><span style="color:#f97316;">&#10003;</span></h1>
+          <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.8;max-width:420px;">Welkom bij CalcAI early access. Je bent een van de eersten die toegang krijgt tot AI-calculaties voor bouw en installatie. Bij lancering ben jij de eerste die het weet.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;"><tr>
+            <td width="33%" style="border-left:2px solid #f97316;padding:4px 0 4px 14px;">
+              <p style="margin:0;font-size:22px;font-weight:900;color:#f0ece4;font-family:Arial,sans-serif;">3 mnd</p>
+              <p style="margin:4px 0 0;font-size:10px;color:#444;letter-spacing:2px;text-transform:uppercase;font-family:'Courier New',monospace;">Pro gratis</p>
+            </td>
+            <td width="33%" style="border-left:2px solid #1a1a1a;padding:4px 0 4px 14px;">
+              <p style="margin:0;font-size:22px;font-weight:900;color:#f0ece4;font-family:Arial,sans-serif;">&lt;2 min</p>
+              <p style="margin:4px 0 0;font-size:10px;color:#444;letter-spacing:2px;text-transform:uppercase;font-family:'Courier New',monospace;">Per offerte</p>
+            </td>
+            <td width="33%" style="border-left:2px solid #1a1a1a;padding:4px 0 4px 14px;">
+              <p style="margin:0;font-size:22px;font-weight:900;color:#f0ece4;font-family:Arial,sans-serif;">Early</p>
+              <p style="margin:4px 0 0;font-size:10px;color:#444;letter-spacing:2px;text-transform:uppercase;font-family:'Courier New',monospace;">Access</p>
+            </td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="background:#0d0d0d;border:1px solid #1a1a1a;border-top:none;border-bottom:none;padding:0 40px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:12px 0;border-bottom:1px solid #161616;"><span style="color:#f97316;font-family:'Courier New',monospace;">&#8594;</span>&nbsp;&nbsp;<span style="color:#ccc;font-size:14px;">3 maanden <strong style="color:#f0ece4;">Pro gratis</strong> bij lancering</span></td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #161616;"><span style="color:#f97316;font-family:'Courier New',monospace;">&#8594;</span>&nbsp;&nbsp;<span style="color:#ccc;font-size:14px;">Vroege toegang <strong style="color:#f0ece4;">vóór publieke lancering</strong></span></td></tr>
+            <tr><td style="padding:12px 0;border-bottom:1px solid #161616;"><span style="color:#f97316;font-family:'Courier New',monospace;">&#8594;</span>&nbsp;&nbsp;<span style="color:#ccc;font-size:14px;">Directe invloed op de <strong style="color:#f0ece4;">roadmap</strong></span></td></tr>
+            <tr><td style="padding:12px 0;"><span style="color:#f97316;font-family:'Courier New',monospace;">&#8594;</span>&nbsp;&nbsp;<span style="color:#ccc;font-size:14px;">AI offertes in <strong style="color:#f0ece4;">minder dan 2 minuten</strong></span></td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="background:#0f0f0f;border:1px solid #1a1a1a;border-top:none;border-bottom:none;padding:32px 40px;">
+          <table cellpadding="0" cellspacing="0"><tr>
+            <td style="background:#f97316;border-radius:3px;"><a href="https://app.calcai.nl" style="display:inline-block;padding:15px 32px;color:#fff;text-decoration:none;font-size:13px;font-weight:900;letter-spacing:2px;font-family:Arial,sans-serif;text-transform:uppercase;">BEKIJK DE APP &#8594;</a></td>
+            <td style="padding-left:20px;"><span style="font-size:12px;color:#444;font-family:'Courier New',monospace;">app.calcai.nl</span></td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="background:#080808;border:1px solid #1a1a1a;border-top:2px solid #111;border-radius:0 0 4px 4px;padding:24px 40px;">
+          <p style="margin:0;font-size:10px;color:#333;font-family:'Courier New',monospace;">
+            &#169; 2025 CalcAI &middot; calcai.nl<br>
+            Je ontvangt deze e-mail omdat je je aangemeld hebt voor early access.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
   try {
-    // Branded bevestiging via Resend template
+    // Branded bevestiging naar subscriber
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -22,12 +91,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'CalcAI <hallo@calcai.nl>',
         to: email,
-        template_id: '1569af0f-1229-4c13-bf6b-eb086490a248',
-        variables: { email: email },
+        subject: '✓ Je staat op de CalcAI early access lijst',
+        html: confirmationHtml,
       }),
     });
 
-    // Notificatie naar kickbaron0@gmail.com
+    // Plain notificatie naar kickbaron0@gmail.com
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
