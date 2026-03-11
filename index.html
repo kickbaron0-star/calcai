@@ -1012,7 +1012,7 @@
 
       <div class="waitlist-form reveal" id="waitlist-form">
         <input type="email" class="waitlist-input" id="email-input" placeholder="jouw@emailadres.nl" />
-        <button class="btn-primary" onclick="handleWaitlist()">Aanmelden →</button>
+        <button class="btn-primary" id="waitlist-btn" onclick="handleWaitlist()">Aanmelden →</button>
       </div>
       <div class="success-msg" id="success-msg">
         ✓ &nbsp;Je staat op de lijst! We nemen snel contact op.
@@ -1095,15 +1095,33 @@
     }
 
     // Waitlist
-    function handleWaitlist() {
+    async function handleWaitlist() {
       const email = document.getElementById('email-input').value;
+      const btn = document.getElementById('waitlist-btn');
       if (!email || !email.includes('@')) {
         document.getElementById('email-input').style.borderColor = '#ef4444';
         return;
       }
-      document.getElementById('waitlist-form').style.display = 'none';
-      const msg = document.getElementById('success-msg');
-      msg.style.display = 'flex';
+      btn.textContent = 'Bezig...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          document.getElementById('waitlist-form').style.display = 'none';
+          const msg = document.getElementById('success-msg');
+          msg.style.display = 'flex';
+        } else {
+          btn.textContent = 'Probeer opnieuw';
+          btn.disabled = false;
+        }
+      } catch(e) {
+        btn.textContent = 'Probeer opnieuw';
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
